@@ -144,6 +144,35 @@ impl Resp {
           Err("expected newline".to_string())
         }
       }
+      '*' => {
+        let mut s = String::new();
+
+        loop {
+          let c = chars.next().ok_or("incomplete")?;
+
+          if c == '\r' {
+            break;
+          } else {
+            s.push(c);
+          }
+        }
+
+        let c = chars.next().ok_or("incomplete")?;
+
+        if c == '\n' {
+          let len = s.parse::<i64>().map_err(|_| "invalid integer")?;
+
+          let mut a = Vec::new();
+
+          for _ in 0..len {
+            a.push(Resp::decode(&chars.as_str())?);
+          }
+
+          Ok(Resp::Array(a))
+        } else {
+          Err("expected newline".to_string())
+        }
+      }
       _ => Err("invalid type prefix".to_string()),
     }
   }
