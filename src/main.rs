@@ -52,12 +52,15 @@ fn handle_connection(mut stream: TcpStream) {
                             }
                         }
                     }
-                    _ => {
+                    k => {
+                        println!("unknown command: {:#?}", k);
                         stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
                     }
                 }
             },
-            _ => {
+            k => {
+                println!("unknown command: {:#?}", k);
+
                 stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
             }
         }
