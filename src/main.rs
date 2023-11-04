@@ -33,6 +33,8 @@ fn handle_connection(mut stream: TcpStream) {
 
         let s = String::from_utf8_lossy(&buf[..]).trim_end().to_owned();
 
+        println!("received: {}", s);
+
         let c = Resp::decode(&s).unwrap();
 
         let r = handle_redis_commands(c);
@@ -56,21 +58,17 @@ fn handle_redis_commands(input: Resp) -> Resp {
                         "ECHO" | "echo" => {
                             a[1].clone()
                         }
-                        k => {
-                            println!("unknown command: {}", k);
+                        _ => {
                             Resp::Error("unknown command".to_string())
                         }
                     }
                 }
                 _ => {
-                    println!("unknown command: {:#?}", a[0]);
                     Resp::Error("unknown command".to_string())
                 }
             }
         },
-        k => {
-            println!("unknown command: {:#?}", k);
-
+        _ => {
             Resp::Error("unknown command".to_string())
         }
     }
