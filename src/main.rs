@@ -1,6 +1,11 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
+use std::os::raw;
 use std::thread;
+
+use resp::Resp;
+
+mod resp;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -27,6 +32,34 @@ fn handle_connection(mut stream: TcpStream) {
     loop {
         stream.read(&mut buf).unwrap();
 
-        stream.write(b"+PONG\r\n").unwrap();
+        let s = String::from_utf8_lossy(&buf[..]);
+
+        let c = Resp::decode(&s).unwrap();
+
+        match c {
+            Resp::Array(a) => {
+                match a[0] {
+                    Resp::SimpleString(ref s) => {
+                        match s.as_ref() {
+                            "PING" | "ping" => {
+                                stream.write(Resp::SimpleString("PONG".to_string()).encode()).unwrap();
+                            }
+                            "ECHO" | "echo" => {
+                                stream.write(a[1].encode()).unwrap();
+                            }
+                            _ => {
+                                stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+                            }
+                        }
+                    }
+                    _ => {
+                        stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+                    }
+                }
+            },
+            _ => {
+                stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+            }
+        }
     }
 }
