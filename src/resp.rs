@@ -1,5 +1,3 @@
-use bytes::{BufMut, BytesMut, Bytes};
-
 pub enum Resp {
     SimpleString(String),
     Error(String),
@@ -9,56 +7,22 @@ pub enum Resp {
 }
 
 impl Resp {
-  pub fn encode(&self) -> Bytes {
+  pub fn encode(&self) -> Vec<u8> {
     match self {
-      Resp::SimpleString(s) => {
-        let mut buf = BytesMut::with_capacity(s.len() + 3);
-        buf.put_slice(b"+");
-        buf.put_slice(s.as_bytes());
-        buf.put_slice(b"\r\n");
-        buf.into()
-      },
-      Resp::Error(s) => {
-        let mut buf = BytesMut::with_capacity(s.len() + 3);
-        buf.put_slice(b"-");
-        buf.put_slice(s.as_bytes());
-        buf.put_slice(b"\r\n");
-        buf.into()
-      },
-      Resp::Integer(i) => {
-        let mut buf = BytesMut::with_capacity(20 + 3);
-        buf.put_slice(b":");
-        buf.put_slice(i.to_string().as_bytes());
-        buf.put_slice(b"\r\n");
-        buf.into()
-      },
-      Resp::BulkString(Some(s)) => {
-        let mut buf = BytesMut::with_capacity(s.len() + 3 + 3);
-        buf.put_slice(b"$");
-        buf.put_slice(s.len().to_string().as_bytes());
-        buf.put_slice(b"\r\n");
-        buf.put_slice(s.as_bytes());
-        buf.put_slice(b"\r\n");
-        buf.into()
-      },
-      Resp::BulkString(None) => {
-        let mut buf = BytesMut::with_capacity(3);
-        buf.put_slice(b"$-1\r\n");
-        buf.into()
-      },
+      Resp::SimpleString(s) => format!("+{}\r\n", s).into_bytes(),
+      Resp::Error(s) => format!("-{}\r\n", s).into_bytes(),
+      Resp::Integer(i) => format!(":{}\r\n", i).into_bytes(),
+      Resp::BulkString(Some(s)) => format!("${}\r\n{}\r\n", s.len(), s).into_bytes(),
+      Resp::BulkString(None) => "$-1\r\n".to_owned().into_bytes(),
       Resp::Array(a) => {
-        let mut buf = BytesMut::with_capacity(3 + 3);
+        let mut bytes = format!("*{}\r\n", a.len()).into_bytes();
 
-        buf.put_slice(b"*");
-        buf.put_slice(a.len().to_string().as_bytes());
-        buf.put_slice(b"\r\n");
-
-        for s in a {
-          buf.put(s.encode());
+        for e in a {
+          bytes.extend(e.encode());
         }
 
-        buf.into()
-      },
+        bytes
+      }
     }
   }
 

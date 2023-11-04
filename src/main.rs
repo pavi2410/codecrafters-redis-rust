@@ -41,23 +41,23 @@ fn handle_connection(mut stream: TcpStream) {
                     Resp::SimpleString(ref s) => {
                         match s.as_ref() {
                             "PING" | "ping" => {
-                                stream.write(Resp::SimpleString("PONG".to_string()).encode()).unwrap();
+                                stream.write(Resp::SimpleString("PONG".to_string()).encode().as_slice()).unwrap();
                             }
                             "ECHO" | "echo" => {
-                                stream.write(a[1].encode()).unwrap();
+                                stream.write(a[1].encode().as_slice()).unwrap();
                             }
                             _ => {
-                                stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+                                stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
                             }
                         }
                     }
                     _ => {
-                        stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+                        stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
                     }
                 }
             },
             _ => {
-                stream.write(Resp::Error("unknown command".to_string()).encode().into()).unwrap();
+                stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
             }
         }
     }
