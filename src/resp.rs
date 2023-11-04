@@ -1,7 +1,4 @@
-use core::slice::SlicePattern;
-use std::io::Read;
-
-use bytes::{Buf, BufMut};
+use bytes::{BufMut, BytesMut, Bytes};
 
 pub enum Resp {
     SimpleString(String),
@@ -12,55 +9,55 @@ pub enum Resp {
 }
 
 impl Resp {
-  pub fn encode(&self) -> &[u8] {
+  pub fn encode(&self) -> Bytes {
     match self {
       Resp::SimpleString(s) => {
-        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3);
+        let mut buf = BytesMut::with_capacity(s.len() + 3);
         buf.put_slice(b"+");
         buf.put_slice(s.as_bytes());
         buf.put_slice(b"\r\n");
-        &buf
+        buf.into()
       },
       Resp::Error(s) => {
-        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3);
+        let mut buf = BytesMut::with_capacity(s.len() + 3);
         buf.put_slice(b"-");
         buf.put_slice(s.as_bytes());
         buf.put_slice(b"\r\n");
-        &buf
+        buf.into()
       },
       Resp::Integer(i) => {
-        let mut buf = bytes::BytesMut::with_capacity(20 + 3);
+        let mut buf = BytesMut::with_capacity(20 + 3);
         buf.put_slice(b":");
         buf.put_slice(i.to_string().as_bytes());
         buf.put_slice(b"\r\n");
-        &buf
+        buf.into()
       },
       Resp::BulkString(Some(s)) => {
-        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3 + 3);
+        let mut buf = BytesMut::with_capacity(s.len() + 3 + 3);
         buf.put_slice(b"$");
         buf.put_slice(s.len().to_string().as_bytes());
         buf.put_slice(b"\r\n");
         buf.put_slice(s.as_bytes());
         buf.put_slice(b"\r\n");
-        &buf
+        buf.into()
       },
       Resp::BulkString(None) => {
-        let mut buf = bytes::BytesMut::with_capacity(3);
+        let mut buf = BytesMut::with_capacity(3);
         buf.put_slice(b"$-1\r\n");
-        &buf
+        buf.into()
       },
       Resp::Array(a) => {
-        let mut buf = bytes::BytesMut::with_capacity(3 + 3);
+        let mut buf = BytesMut::with_capacity(3 + 3);
 
         buf.put_slice(b"*");
         buf.put_slice(a.len().to_string().as_bytes());
         buf.put_slice(b"\r\n");
 
         for s in a {
-          buf.put_slice(s.encode());
+          buf.put(s.encode());
         }
 
-        &buf
+        buf.into()
       },
     }
   }
