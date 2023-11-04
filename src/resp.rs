@@ -40,6 +40,8 @@ impl Resp {
 
         let parts = s.strip_prefix('$').unwrap().split("\r\n").collect::<Vec<_>>();
 
+        println!("parts = {:#?}", parts);
+
         let len = parts[0].parse::<i64>().map_err(|e| e.to_string())?;
         let bytes = parts[1][..len as usize].to_string();
 
