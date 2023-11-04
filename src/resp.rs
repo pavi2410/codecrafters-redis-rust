@@ -146,6 +146,11 @@ impl Resp {
         }
       }
       '*' => {
+
+        // Element -> Array | BulkString | SimpleString | Integer | Error
+        // Array -> * {digit} CRLF {Element}*
+
+        // now parse array.
         let mut s = String::new();
 
         loop {
@@ -165,8 +170,16 @@ impl Resp {
 
           let mut a = Vec::new();
 
-          for _ in 0..len {
-            a.push(Resp::decode(&chars.as_str())?);
+
+          let elements = chars.as_str()
+          .split("\r\n")
+          .collect::<Vec<&str>>()
+          .chunks_exact(len as usize)
+          .map(|chunk| chunk.join("\r\n"))
+          .collect::<Vec<_>>();
+
+          for e in elements {
+            a.push(Resp::decode(&e)?);
           }
 
           Ok(Resp::Array(a))
