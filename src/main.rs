@@ -26,16 +26,16 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let mut buf = [0; 1024];
+    let mut buf = String::new();
 
     loop {
-        stream.read(&mut buf).unwrap();
+        stream.read_to_string(&mut buf).unwrap();
 
-        let s = String::from_utf8_lossy(&buf[..]).trim_end().to_owned();
+        // let s = String::from_utf8_lossy(&buf[..]).trim_end().to_owned();
 
-        println!("received: {:?}", s);
+        println!("received: {:?}", buf);
 
-        let c = Resp::decode(&s).unwrap();
+        let c = Resp::decode(&buf).unwrap();
 
         let r = handle_redis_commands(c);
 
