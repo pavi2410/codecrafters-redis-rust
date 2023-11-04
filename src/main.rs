@@ -1,6 +1,5 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
-use std::os::raw;
 use std::thread;
 
 use resp::Resp;
@@ -12,7 +11,7 @@ fn main() {
     
     for stream in listener.incoming() {
         match stream {
-            Ok(mut stream) => {
+            Ok(stream) => {
                 println!("accepted new connection");
 
                 thread::spawn(|| {

@@ -1,3 +1,8 @@
+use core::slice::SlicePattern;
+use std::io::Read;
+
+use bytes::{Buf, BufMut};
+
 pub enum Resp {
     SimpleString(String),
     Error(String),
@@ -9,19 +14,53 @@ pub enum Resp {
 impl Resp {
   pub fn encode(&self) -> &[u8] {
     match self {
-      Resp::SimpleString(s) => format!("+{}\r\n", s).as_bytes(),
-      Resp::Error(s) => format!("-{}\r\n", s).as_bytes(),
-      Resp::Integer(i) => format!(":{}\r\n", i).as_bytes(),
-      Resp::BulkString(Some(s)) => format!("${}\r\n{}\r\n", s.len(), s).as_bytes(),
-      Resp::BulkString(None) => "$-1\r\n".as_bytes(),
+      Resp::SimpleString(s) => {
+        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3);
+        buf.put_slice(b"+");
+        buf.put_slice(s.as_bytes());
+        buf.put_slice(b"\r\n");
+        &buf
+      },
+      Resp::Error(s) => {
+        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3);
+        buf.put_slice(b"-");
+        buf.put_slice(s.as_bytes());
+        buf.put_slice(b"\r\n");
+        &buf
+      },
+      Resp::Integer(i) => {
+        let mut buf = bytes::BytesMut::with_capacity(20 + 3);
+        buf.put_slice(b":");
+        buf.put_slice(i.to_string().as_bytes());
+        buf.put_slice(b"\r\n");
+        &buf
+      },
+      Resp::BulkString(Some(s)) => {
+        let mut buf = bytes::BytesMut::with_capacity(s.len() + 3 + 3);
+        buf.put_slice(b"$");
+        buf.put_slice(s.len().to_string().as_bytes());
+        buf.put_slice(b"\r\n");
+        buf.put_slice(s.as_bytes());
+        buf.put_slice(b"\r\n");
+        &buf
+      },
+      Resp::BulkString(None) => {
+        let mut buf = bytes::BytesMut::with_capacity(3);
+        buf.put_slice(b"$-1\r\n");
+        &buf
+      },
       Resp::Array(a) => {
-        let mut s = format!("*{}\r\n", a.len());
+        let mut buf = bytes::BytesMut::with_capacity(3 + 3);
 
-        for r in a {
-          s.push_str(&String::from_utf8_lossy(r.encode()));
+        buf.put_slice(b"*");
+        buf.put_slice(a.len().to_string().as_bytes());
+        buf.put_slice(b"\r\n");
+
+        for s in a {
+          buf.put_slice(s.encode());
         }
 
-        s.as_bytes()
+        &buf
       },
     }
   }
