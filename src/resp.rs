@@ -43,7 +43,7 @@ impl Resp {
         } else {
           println!("len: {}", len);
 
-          println!("line: {:#?}", line);
+          println!("line: {:#?}", lines);
 
           let s = lines.next().unwrap();
 
