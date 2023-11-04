@@ -27,6 +27,8 @@ impl Resp {
   }
 
   pub fn decode(s: &str) -> Result<Resp, String> {
+    println!("decode: {:#?}", s);
+
     let mut lines = s.lines();
 
     let line = lines.next().unwrap();
