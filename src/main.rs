@@ -47,7 +47,7 @@ fn handle_redis_commands(input: Resp) -> Resp {
     match input {
         Resp::Array(a) => {
             match a[0] {
-                Resp::SimpleString(ref s) => {
+                Resp::SimpleString(ref s) | Resp::BulkString(Some(ref s)) => {
                     match s.as_ref() {
                         "PING" | "ping" => {
                             Resp::SimpleString("PONG".to_string())
