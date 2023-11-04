@@ -46,6 +46,7 @@ fn handle_connection(mut stream: TcpStream) {
 fn handle_redis_commands(input: Resp) -> Resp {
     match input {
         Resp::Array(a) => {
+            println!("command: {:#?}", a);
             match a[0] {
                 Resp::SimpleString(ref s) | Resp::BulkString(Some(ref s)) => {
                     match s.as_ref() {
