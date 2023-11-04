@@ -178,6 +178,8 @@ impl Resp {
           .map(|chunk| chunk.join("\r\n"))
           .collect::<Vec<_>>();
 
+          println!("elements: {:?}", elements);
+
           for e in elements {
             a.push(Resp::decode(&e)?);
           }

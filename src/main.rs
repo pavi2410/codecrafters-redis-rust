@@ -33,7 +33,7 @@ fn handle_connection(mut stream: TcpStream) {
 
         let s = String::from_utf8_lossy(&buf[..]).trim_end().to_owned();
 
-        println!("received: {}", s);
+        println!("received: {:?}", s);
 
         let c = Resp::decode(&s).unwrap();
 
