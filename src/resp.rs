@@ -27,43 +27,39 @@ impl Resp {
   }
 
   pub fn decode(s: &str) -> Result<Resp, String> {
-    let mut chars = s.chars();
-    let first_char = chars.next().ok_or("empty string")?;
+    let mut lines = s.lines();
 
-    match first_char {
-      '+' => Ok(Resp::SimpleString(chars.collect())),
-      '-' => Ok(Resp::Error(chars.collect())),
-      ':' => Ok(Resp::Integer(chars.collect::<String>().parse::<i64>().map_err(|e| e.to_string())?)),
+    let line = lines.next().unwrap();
+
+    match line.chars().next().unwrap() {
+      '+' => Ok(Resp::SimpleString(line[1..].to_string())),
+      '-' => Ok(Resp::Error(line[1..].to_string())),
+      ':' => Ok(Resp::Integer(line[1..].parse().unwrap())),
       '$' => {
-        // what is the pattern?
-        // A: $<number of bytes>\r\n<bytes>\r\n
+        let len = line[1..].parse::<i32>().unwrap();
 
-        let parts = s.strip_prefix('$').unwrap().split("\r\n").collect::<Vec<_>>();
+        if len == -1 {
+          Ok(Resp::BulkString(None))
+        } else {
+          let s = lines.next().unwrap();
 
-        println!("parts = {:#?}", parts);
-
-        let len = parts[0].parse::<i64>().map_err(|e| e.to_string())?;
-        let bytes = parts[1][..len as usize].to_string();
-
-        Ok(Resp::BulkString(Some(bytes)))
-      },
+          Ok(Resp::BulkString(Some(s.to_string())))
+        }
+      }
       '*' => {
-        // what is the pattern?
-        // A: *<number of elements in array>\r\n<element1>\r\n<element2>\r\n...
+        let len = line[1..].parse::<i32>().unwrap();
 
-        let parts = s.strip_prefix('*').unwrap().split("\r\n").collect::<Vec<_>>();
+        let mut a = Vec::new();
 
-        let len = parts[0].parse::<i64>().map_err(|e| e.to_string())?;
-        let mut array = Vec::new();
+        for _ in 0..len {
+          let line = lines.next().unwrap();
 
-        for i in 0..len {
-          let part = parts[i as usize + 1];
-          array.push(Resp::decode(part)?);
+          a.push(Resp::decode(line)?);
         }
 
-        Ok(Resp::Array(array))
-      },
-      _ => Err(format!("unknown type: {}", first_char)),
+        Ok(Resp::Array(a))
+      }
+      _ => Err("unknown type".to_string()),
     }
   }
 }
