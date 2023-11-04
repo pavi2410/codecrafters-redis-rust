@@ -41,6 +41,7 @@ impl Resp {
         if len == -1 {
           Ok(Resp::BulkString(None))
         } else {
+          println!("len: {}", len);
           let s = lines.next().unwrap();
 
           Ok(Resp::BulkString(Some(s.to_string())))
