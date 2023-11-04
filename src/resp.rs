@@ -43,7 +43,7 @@ impl Resp {
         } else {
           println!("len: {}", len);
 
-          println!("line: {:#?}", lines);
+          println!("line: {:#?}", lines.clone().collect::<Vec<_>>());
 
           let s = lines.next().unwrap();
 
