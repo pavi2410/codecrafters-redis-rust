@@ -42,6 +42,9 @@ impl Resp {
           Ok(Resp::BulkString(None))
         } else {
           println!("len: {}", len);
+
+          println!("line: {:#?}", line);
+
           let s = lines.next().unwrap();
 
           Ok(Resp::BulkString(Some(s.to_string())))
