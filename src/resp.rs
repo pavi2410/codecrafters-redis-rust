@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Resp {
     SimpleString(String),
     Error(String),

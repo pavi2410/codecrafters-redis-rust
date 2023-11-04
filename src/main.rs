@@ -35,34 +35,42 @@ fn handle_connection(mut stream: TcpStream) {
 
         let c = Resp::decode(&s).unwrap();
 
-        match c {
-            Resp::Array(a) => {
-                match a[0] {
-                    Resp::SimpleString(ref s) => {
-                        match s.as_ref() {
-                            "PING" | "ping" => {
-                                stream.write(Resp::SimpleString("PONG".to_string()).encode().as_slice()).unwrap();
-                            }
-                            "ECHO" | "echo" => {
-                                stream.write(a[1].encode().as_slice()).unwrap();
-                            }
-                            k => {
-                                println!("unknown command: {}", k);
-                                stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
-                            }
+        let r = handle_redis_commands(c);
+
+        let bytes = r.encode();
+
+        stream.write(&bytes).unwrap();
+    }
+}
+
+fn handle_redis_commands(input: Resp) -> Resp {
+    match input {
+        Resp::Array(a) => {
+            match a[0] {
+                Resp::SimpleString(ref s) => {
+                    match s.as_ref() {
+                        "PING" | "ping" => {
+                            Resp::SimpleString("PONG".to_string())
+                        }
+                        "ECHO" | "echo" => {
+                            a[1].clone()
+                        }
+                        k => {
+                            println!("unknown command: {}", k);
+                            Resp::Error("unknown command".to_string())
                         }
                     }
-                    _ => {
-                        println!("unknown command: {:#?}", a[0]);
-                        stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
-                    }
                 }
-            },
-            k => {
-                println!("unknown command: {:#?}", k);
-
-                stream.write(Resp::Error("unknown command".to_string()).encode().as_slice()).unwrap();
+                _ => {
+                    println!("unknown command: {:#?}", a[0]);
+                    Resp::Error("unknown command".to_string())
+                }
             }
+        },
+        k => {
+            println!("unknown command: {:#?}", k);
+
+            Resp::Error("unknown command".to_string())
         }
     }
 }
