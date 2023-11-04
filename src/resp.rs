@@ -27,45 +27,124 @@ impl Resp {
   }
 
   pub fn decode(s: &str) -> Result<Resp, String> {
-    println!("decode: {:#?}", s);
+    // decode char by char
+    let mut chars = s.chars();
 
-    let mut lines = s.lines();
+    // get the first char
+    let c = chars.next().ok_or("incomplete")?;
 
-    let line = lines.next().unwrap();
+    match c {
+      '+' => {
+        let mut s = String::new();
 
-    match line.chars().next().unwrap() {
-      '+' => Ok(Resp::SimpleString(line[1..].to_string())),
-      '-' => Ok(Resp::Error(line[1..].to_string())),
-      ':' => Ok(Resp::Integer(line[1..].parse().unwrap())),
-      '$' => {
-        let len = line[1..].parse::<i32>().unwrap();
+        loop {
+          let c = chars.next().ok_or("incomplete")?;
 
-        if len == -1 {
-          Ok(Resp::BulkString(None))
+          if c == '\r' {
+            break;
+          } else {
+            s.push(c);
+          }
+        }
+
+        let c = chars.next().ok_or("incomplete")?;
+
+        if c == '\n' {
+          Ok(Resp::SimpleString(s))
         } else {
-          println!("len: {}", len);
-
-          println!("line: {:#?}", s.lines().collect::<Vec<_>>());
-
-          let s = lines.next().unwrap();
-
-          Ok(Resp::BulkString(Some(s.to_string())))
+          Err("expected newline".to_string())
         }
       }
-      '*' => {
-        let len = line[1..].parse::<i32>().unwrap();
+      '-' => {
+        let mut s = String::new();
 
-        let mut a = Vec::new();
+        loop {
+          let c = chars.next().ok_or("incomplete")?;
 
-        for _ in 0..len {
-          let line = lines.next().unwrap();
-
-          a.push(Resp::decode(line)?);
+          if c == '\r' {
+            break;
+          } else {
+            s.push(c);
+          }
         }
 
-        Ok(Resp::Array(a))
+        let c = chars.next().ok_or("incomplete")?;
+
+        if c == '\n' {
+          Ok(Resp::Error(s))
+        } else {
+          Err("expected newline".to_string())
+        }
       }
-      _ => Err("unknown type".to_string()),
+      ':' => {
+        let mut s = String::new();
+
+        loop {
+          let c = chars.next().ok_or("incomplete")?;
+
+          if c == '\r' {
+            break;
+          } else {
+            s.push(c);
+          }
+        }
+
+        let c = chars.next().ok_or("incomplete")?;
+
+        if c == '\n' {
+          Ok(Resp::Integer(s.parse::<i64>().map_err(|_| "invalid integer")?))
+        } else {
+          Err("expected newline".to_string())
+        }
+      }
+      '$' => {
+        let mut s = String::new();
+
+        loop {
+          let c = chars.next().ok_or("incomplete")?;
+
+          if c == '\r' {
+            break;
+          } else {
+            s.push(c);
+          }
+        }
+
+        let c = chars.next().ok_or("incomplete")?;
+
+        if c == '\n' {
+          let len = s.parse::<i64>().map_err(|_| "invalid integer")?;
+
+          if len == -1 {
+            Ok(Resp::BulkString(None))
+          } else {
+            let mut s = String::new();
+
+            for _ in 0..len {
+              let c = chars.next().ok_or("incomplete")?;
+
+              s.push(c);
+            }
+
+            let c = chars.next().ok_or("incomplete")?;
+
+            if c == '\r' {
+              let c = chars.next().ok_or("incomplete")?;
+
+              if c == '\n' {
+                Ok(Resp::BulkString(Some(s)))
+              } else {
+                Err("expected newline".to_string())
+              }
+            } else {
+              Err("expected newline".to_string())
+            }
+          }
+        } else {
+          Err("expected newline".to_string())
+        }
+      }
+      _ => Err("invalid type prefix".to_string()),
     }
   }
 }
