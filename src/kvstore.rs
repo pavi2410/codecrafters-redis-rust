@@ -41,6 +41,7 @@ impl KvStore {
 
                 match value.expiry {
                     Some(expiry) => {
+                        println!("Times -> {} - {}", now, value.timestamp);
                         if now - value.timestamp > expiry as u128 {
                             KvStatus::KeyExpired
                         } else {
