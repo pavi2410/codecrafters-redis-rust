@@ -136,7 +136,8 @@ impl Resp {
                               }
                             }
                           }
-                          _ => {
+                          k => {
+                            println!("k: {:?}", k);
                             return Err("140. expected newline".to_string());
                           }
                         }
