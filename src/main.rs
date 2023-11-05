@@ -26,12 +26,12 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let mut buf = Vec::new();
+    let mut buf = [0; 1024];
 
     loop {
-        stream.read_to_end(&mut buf).unwrap();
+        let bytes_read = stream.read(&mut buf).unwrap();
 
-        let s = String::from_utf8_lossy(&buf[..]);
+        let s = String::from_utf8_lossy(&buf[..bytes_read]);
 
         println!("received: {:?}", s);
 
