@@ -40,9 +40,11 @@ impl KvStore {
             Some(value) => {
                 let now = current_time();
 
+                println!("Value -> {:?}", value);
+                println!("Times -> {} - {}", now, value.timestamp);
+
                 match value.expiry {
                     Some(expiry) => {
-                        println!("Times -> {} - {}", now, value.timestamp);
                         if now - value.timestamp > expiry as u128 {
                             KvStatus::KeyExpired
                         } else {
