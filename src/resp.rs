@@ -123,8 +123,6 @@ impl Resp {
                       if i == -1 {
                         return Ok(Resp::BulkString(None));
                       } else if i >= 0 {
-                        // let buf = chars.clone().take(i as usize).collect::<String>();
-
                         let buf = chars.by_ref().take(i as usize).collect::<String>();
 
                         println!("buf: {:?}", buf);
@@ -182,7 +180,7 @@ impl Resp {
                         let mut a = vec![];
 
                         for _ in 0..i {
-                          match Resp::decode(chars.clone().collect::<String>()) {
+                          match Resp::decode(chars.as_str().to_string()) {
                             Ok(r) => {
                               a.push(r);
                             }
