@@ -123,9 +123,9 @@ impl Resp {
                       if i == -1 {
                         return Ok(Resp::BulkString(None));
                       } else if i >= 0 {
-                        let buf = chars.clone().take(i as usize).collect::<String>();
+                        // let buf = chars.clone().take(i as usize).collect::<String>();
 
-                        let g = chars.by_ref().take(5).collect::<String>();
+                        let buf = chars.by_ref().take(5).collect::<String>();
 
                         println!("buf: {:?}", buf);
 
