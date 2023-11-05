@@ -29,7 +29,7 @@ impl Resp {
     }
   }
 
-  pub fn decode(chars: &Chars) -> Result<Resp, String> {
+  pub fn decode(chars: &mut Chars) -> Result<Resp, String> {
     match chars.next() {
       Some('+') => {
         let mut s = String::new();
