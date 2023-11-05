@@ -161,6 +161,56 @@ impl Resp {
           }
         }
       }
+      Some('*') => {
+        let mut s = String::new();
+
+        loop {
+          match chars.next() {
+            Some('\r') => {
+              match chars.next() {
+                Some('\n') => {
+                  match s.parse::<i64>() {
+                    Ok(i) => {
+                      if i == -1 {
+                        return Ok(Resp::Array(vec![]));
+                      } else if i >= 0 {
+                        let mut a = vec![];
+
+                        for _ in 0..i {
+                          match Resp::decode(chars.clone().collect::<String>()) {
+                            Ok(r) => {
+                              a.push(r);
+                            }
+                            Err(e) => {
+                              return Err(e);
+                            }
+                          }
+                        }
+
+                        return Ok(Resp::Array(a));
+                      } else {
+                        return Err("invalid array length".to_string());
+                      }
+                    }
+                    Err(_) => {
+                      return Err("expected integer".to_string());
+                    }
+                  }
+                }
+                _ => {
+                  return Err("expected newline".to_string());
+                }
+              }
+            }
+            Some(c) => {
+              s.push(c);
+            }
+            None => {
+              return Err("expected newline".to_string());
+            }
+          }
+        }
+      }
       _ => todo!(),
     }
   }
