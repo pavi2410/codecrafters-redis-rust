@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Resp {
     SimpleString(String),
@@ -27,9 +29,7 @@ impl Resp {
     }
   }
 
-  pub fn decode(s: String) -> Result<Resp, String> {
-    let mut chars = s.chars();
-
+  pub fn decode(chars: &Chars) -> Result<Resp, String> {
     match chars.next() {
       Some('+') => {
         let mut s = String::new();
@@ -180,7 +180,7 @@ impl Resp {
                         let mut a = vec![];
 
                         for _ in 0..i {
-                          match Resp::decode(chars.as_str().to_string()) {
+                          match Resp::decode(chars) {
                             Ok(r) => {
                               a.push(r);
                             }
