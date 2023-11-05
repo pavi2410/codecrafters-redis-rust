@@ -125,7 +125,7 @@ impl Resp {
                       } else if i >= 0 {
                         // let buf = chars.clone().take(i as usize).collect::<String>();
 
-                        let buf = chars.by_ref().take(5).collect::<String>();
+                        let buf = chars.by_ref().take(i as usize).collect::<String>();
 
                         println!("buf: {:?}", buf);
 
