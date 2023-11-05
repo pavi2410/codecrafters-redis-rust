@@ -1,5 +1,6 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Value {
     pub value: String,
     timestamp: u128,
