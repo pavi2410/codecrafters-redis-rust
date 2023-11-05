@@ -35,7 +35,7 @@ fn handle_connection(mut stream: TcpStream) {
 
         println!("received: {:?}", s);
 
-        let c = Resp::decode(&s).unwrap();
+        let c = Resp::decode(s.to_string()).unwrap();
 
         let r = handle_redis_commands(c);
 
