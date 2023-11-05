@@ -50,8 +50,8 @@ impl From<Resp> for Command {
                                                     Command::Set(key, value, None)
                                                 } else {
                                                     match a[4].clone() {
-                                                        Resp::Integer(expiry) => {
-                                                            Command::Set(key, value, Some(expiry as u64))
+                                                        Resp::BulkString(Some(expiry)) => {
+                                                            Command::Set(key, value, expiry.parse::<u64>().ok())
                                                         }
                                                         _ => {
                                                             Command::Set(key, value, None)
