@@ -125,6 +125,8 @@ impl Resp {
                       } else if i >= 0 {
                         let buf = chars.clone().take(i as usize).collect::<String>();
 
+                        println!("buf: {:?}", buf);
+
                         match chars.next() {
                           Some('\r') => {
                             match chars.next() {
