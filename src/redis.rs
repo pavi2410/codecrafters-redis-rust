@@ -1,5 +1,5 @@
 use crate::resp::Resp;
-use crate::kvstore::KvStore;
+use crate::kvstore::{KvStore, KvStatus};
 
 pub struct Redis {
   kvstore: KvStore,
@@ -8,7 +8,7 @@ pub struct Redis {
 pub enum Command {
   Ping,
   Echo(String),
-  Set(String, String),
+  Set(String, String, Option<u64>),
   Get(String),
 }
 
@@ -18,6 +18,7 @@ pub enum Response {
   Ok,
   Value(String),
   Error(String),
+  Null,
 }
 
 impl From<Resp> for Command {
@@ -45,15 +46,26 @@ impl From<Resp> for Command {
                                     Resp::SimpleString(key) | Resp::BulkString(Some(key)) => {
                                         match a[2].clone() {
                                             Resp::SimpleString(value) | Resp::BulkString(Some(value)) => {
-                                                Command::Set(key, value)
+                                                if a.len() == 3 {
+                                                    Command::Set(key, value, None)
+                                                } else {
+                                                    match a[4].clone() {
+                                                        Resp::Integer(expiry) => {
+                                                            Command::Set(key, value, Some(expiry as u64))
+                                                        }
+                                                        _ => {
+                                                            Command::Set(key, value, None)
+                                                        }
+                                                    }
+                                                }
                                             }
                                             _ => {
-                                                Command::Set(key, "".to_string())
+                                                Command::Set(key, "".to_string(), None)
                                             }
                                         }
                                     }
                                     _ => {
-                                        Command::Set("".to_string(), "".to_string())
+                                        Command::Set("".to_string(), "".to_string(), None)
                                     }
                                 }
                             }
@@ -102,6 +114,9 @@ impl Into<Resp> for Response {
             Response::Error(s) => {
                 Resp::Error(s)
             }
+            Response::Null => {
+                Resp::BulkString(None)
+            }
         }
     }
 }
@@ -121,17 +136,20 @@ impl Redis {
       Command::Echo(s) => {
         Response::Echo(s)
       }
-      Command::Set(key, value) => {
-       self.kvstore.set(key, value);
+      Command::Set(key, value, expiry) => {
+        self.kvstore.set(key, value, expiry);
         Response::Ok
       }
       Command::Get(key) => {
         match self.kvstore.get(key) {
-          Some(value) => {
+          KvStatus::Found(value) => {
             Response::Value(value)
           }
-          None => {
+          KvStatus::KeyNotFound => {
             Response::Error("Key not found".to_string())
+          }
+          KvStatus::KeyExpired => {
+            Response::Null
           }
         }
       }
