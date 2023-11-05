@@ -27,169 +27,139 @@ impl Resp {
     }
   }
 
-  pub fn decode(s: &str) -> Result<Resp, String> {
-    // decode char by char
+  pub fn decode(s: String) -> Result<Resp, String> {
     let mut chars = s.chars();
 
-    // get the first char
-    let c = chars.next().ok_or("incomplete")?;
-
-    match c {
-      '+' => {
+    match chars.next() {
+      Some('+') => {
         let mut s = String::new();
 
         loop {
-          let c = chars.next().ok_or("incomplete")?;
-
-          if c == '\r' {
-            break;
-          } else {
-            s.push(c);
-          }
-        }
-
-        let c = chars.next().ok_or("incomplete")?;
-
-        if c == '\n' {
-          Ok(Resp::SimpleString(s))
-        } else {
-          Err("expected newline".to_string())
-        }
-      }
-      '-' => {
-        let mut s = String::new();
-
-        loop {
-          let c = chars.next().ok_or("incomplete")?;
-
-          if c == '\r' {
-            break;
-          } else {
-            s.push(c);
-          }
-        }
-
-        let c = chars.next().ok_or("incomplete")?;
-
-        if c == '\n' {
-          Ok(Resp::Error(s))
-        } else {
-          Err("expected newline".to_string())
-        }
-      }
-      ':' => {
-        let mut s = String::new();
-
-        loop {
-          let c = chars.next().ok_or("incomplete")?;
-
-          if c == '\r' {
-            break;
-          } else {
-            s.push(c);
-          }
-        }
-
-        let c = chars.next().ok_or("incomplete")?;
-
-        if c == '\n' {
-          Ok(Resp::Integer(s.parse::<i64>().map_err(|_| "invalid integer")?))
-        } else {
-          Err("expected newline".to_string())
-        }
-      }
-      '$' => {
-        let mut s = String::new();
-
-        loop {
-          let c = chars.next().ok_or("incomplete")?;
-
-          if c == '\r' {
-            break;
-          } else {
-            s.push(c);
-          }
-        }
-
-        let c = chars.next().ok_or("incomplete")?;
-
-        if c == '\n' {
-          let len = s.parse::<i64>().map_err(|_| "invalid integer")?;
-
-          if len == -1 {
-            Ok(Resp::BulkString(None))
-          } else {
-            let mut s = String::new();
-
-            for _ in 0..len {
-              let c = chars.next().ok_or("incomplete")?;
-
+          match chars.next() {
+            Some('\r') => {
+              match chars.next() {
+                Some('\n') => {
+                  return Ok(Resp::SimpleString(s));
+                }
+                _ => {
+                  return Err("expected newline".to_string());
+                }
+              }
+            }
+            Some(c) => {
               s.push(c);
             }
-
-            let c = chars.next().ok_or("incomplete")?;
-
-            if c == '\r' {
-              let c = chars.next().ok_or("incomplete")?;
-
-              if c == '\n' {
-                Ok(Resp::BulkString(Some(s)))
-              } else {
-                Err("expected newline".to_string())
-              }
-            } else {
-              Err("expected newline".to_string())
+            None => {
+              return Err("expected newline".to_string());
             }
           }
-        } else {
-          Err("expected newline".to_string())
         }
       }
-      '*' => {
-
-        // Element -> Array | BulkString | SimpleString | Integer | Error
-        // Array -> * {digit} CRLF {Element}*
-
-        // now parse array.
+      Some('-') => {
         let mut s = String::new();
 
         loop {
-          let c = chars.next().ok_or("incomplete")?;
-
-          if c == '\r' {
-            break;
-          } else {
-            s.push(c);
+          match chars.next() {
+            Some('\r') => {
+              match chars.next() {
+                Some('\n') => {
+                  return Ok(Resp::Error(s));
+                }
+                _ => {
+                  return Err("expected newline".to_string());
+                }
+              }
+            }
+            Some(c) => {
+              s.push(c);
+            }
+            None => {
+              return Err("expected newline".to_string());
+            }
           }
-        }
-
-        let c = chars.next().ok_or("incomplete")?;
-
-        if c == '\n' {
-          let len = s.parse::<i64>().map_err(|_| "invalid integer")?;
-
-          let mut a = Vec::new();
-
-
-          let elements = chars.as_str()
-          .split("\r\n")
-          .collect::<Vec<&str>>()
-          .chunks_exact(len as usize)
-          .map(|chunk| chunk.join("\r\n"))
-          .collect::<Vec<_>>();
-
-          println!("elements: {:?}", elements);
-
-          for e in elements {
-            a.push(Resp::decode(&e)?);
-          }
-
-          Ok(Resp::Array(a))
-        } else {
-          Err("expected newline".to_string())
         }
       }
-      _ => Err("invalid type prefix".to_string()),
+      Some(':') => {
+        let mut s = String::new();
+
+        loop {
+          match chars.next() {
+            Some('\r') => {
+              match chars.next() {
+                Some('\n') => {
+                  match s.parse::<i64>() {
+                    Ok(i) => {
+                      return Ok(Resp::Integer(i));
+                    }
+                    Err(_) => {
+                      return Err("expected integer".to_string());
+                    }
+                  }
+                }
+                _ => {
+                  return Err("expected newline".to_string());
+                }
+              }
+            }
+            Some(c) => {
+              s.push(c);
+            }
+            None => {
+              return Err("expected newline".to_string());
+            }
+          }
+        }
+      }
+      Some('$') => {
+        let mut s = String::new();
+
+        loop {
+          match chars.next() {
+            Some('\r') => {
+              match chars.next() {
+                Some('\n') => {
+                  match s.parse::<i64>() {
+                    Ok(i) => {
+                      if i == -1 {
+                        return Ok(Resp::BulkString(None));
+                      } else if i >= 0 {
+                        let buf = chars.take(i as usize).collect::<String>();
+
+                        match chars.next() {
+                          Some('\r') => {
+                            match chars.next() {
+                              Some('\n') => {
+                                return Ok(Resp::BulkString(Some(s)));
+                              }
+                              _ => {
+                                return Err("expected newline".to_string());
+                              }
+                            }
+                          }
+                          _ => {
+                            return Err("expected newline".to_string());
+                          }
+                        }
+                      } else {
+                        return Err("invalid string length".to_string());
+                      }
+                    }
+                    Err(_) => {
+                      return Err("expected integer".to_string());
+                    }
+                  }
+                }
+                _ => {
+                  return Err("expected newline".to_string());
+                }
+              }
+            }
+            Some(c) => {
+              s.push(c);
+            }
+          }
+        }
+      }
     }
   }
 }
