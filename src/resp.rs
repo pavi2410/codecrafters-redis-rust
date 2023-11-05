@@ -42,7 +42,7 @@ impl Resp {
                   return Ok(Resp::SimpleString(s));
                 }
                 _ => {
-                  return Err("expected newline".to_string());
+                  return Err("45. expected newline".to_string());
                 }
               }
             }
@@ -50,7 +50,7 @@ impl Resp {
               s.push(c);
             }
             None => {
-              return Err("expected newline".to_string());
+              return Err("53. expected newline".to_string());
             }
           }
         }
@@ -66,7 +66,7 @@ impl Resp {
                   return Ok(Resp::Error(s));
                 }
                 _ => {
-                  return Err("expected newline".to_string());
+                  return Err("69. expected newline".to_string());
                 }
               }
             }
@@ -74,7 +74,7 @@ impl Resp {
               s.push(c);
             }
             None => {
-              return Err("expected newline".to_string());
+              return Err("77. expected newline".to_string());
             }
           }
         }
@@ -97,7 +97,7 @@ impl Resp {
                   }
                 }
                 _ => {
-                  return Err("expected newline".to_string());
+                  return Err("100. expected newline".to_string());
                 }
               }
             }
@@ -105,7 +105,7 @@ impl Resp {
               s.push(c);
             }
             None => {
-              return Err("expected newline".to_string());
+              return Err("108. expected newline".to_string());
             }
           }
         }
@@ -132,12 +132,12 @@ impl Resp {
                                 return Ok(Resp::BulkString(Some(buf)));
                               }
                               _ => {
-                                return Err("expected newline".to_string());
+                                return Err("135. expected newline".to_string());
                               }
                             }
                           }
                           _ => {
-                            return Err("expected newline".to_string());
+                            return Err("140. expected newline".to_string());
                           }
                         }
                       } else {
@@ -150,7 +150,7 @@ impl Resp {
                   }
                 }
                 _ => {
-                  return Err("expected newline".to_string());
+                  return Err("153. expected newline".to_string());
                 }
               }
             }
@@ -193,20 +193,20 @@ impl Resp {
                       }
                     }
                     Err(_) => {
-                      return Err("expected integer".to_string());
+                      return Err("196. expected integer".to_string());
                     }
                   }
                 }
                 _ => {
-                  return Err("expected newline".to_string());
+                  return Err("201. expected newline".to_string());
                 }
               }
             }
             Some(c) => {
               s.push(c);
             }
-            None => {
-              return Err("expected newline".to_string());
+            _ => {
+              return Err("209. expected newline".to_string());
             }
           }
         }
