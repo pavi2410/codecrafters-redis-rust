@@ -129,7 +129,7 @@ impl Resp {
                           Some('\r') => {
                             match chars.next() {
                               Some('\n') => {
-                                return Ok(Resp::BulkString(Some(s)));
+                                return Ok(Resp::BulkString(Some(buf)));
                               }
                               _ => {
                                 return Err("expected newline".to_string());
@@ -157,6 +157,7 @@ impl Resp {
             Some(c) => {
               s.push(c);
             }
+            None => todo!(),
           }
         }
       }
