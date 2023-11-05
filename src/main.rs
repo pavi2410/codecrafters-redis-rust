@@ -2,9 +2,12 @@ use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
 use std::thread;
 
+use redis::Redis;
 use resp::Resp;
 
 mod resp;
+mod redis;
+mod kvstore;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -26,6 +29,8 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream) {
+    let mut redis = Redis::init();
+
     let mut buf = [0; 1024];
 
     loop {
@@ -35,41 +40,12 @@ fn handle_connection(mut stream: TcpStream) {
 
         println!("received: {:?}", s);
 
-        let c = Resp::decode(&mut s.chars()).unwrap();
+        let c: Resp = Resp::decode(&mut s.chars()).unwrap();
 
-        let r = handle_redis_commands(c);
+        let r: Resp = redis.handle_command(c.into()).into();
 
         let bytes = r.encode();
 
         stream.write(&bytes).unwrap();
-    }
-}
-
-fn handle_redis_commands(input: Resp) -> Resp {
-    match input {
-        Resp::Array(a) => {
-            println!("command: {:#?}", a);
-            match a[0] {
-                Resp::SimpleString(ref s) | Resp::BulkString(Some(ref s)) => {
-                    match s.as_ref() {
-                        "PING" | "ping" => {
-                            Resp::SimpleString("PONG".to_string())
-                        }
-                        "ECHO" | "echo" => {
-                            a[1].clone()
-                        }
-                        _ => {
-                            Resp::Error("unknown command".to_string())
-                        }
-                    }
-                }
-                _ => {
-                    Resp::Error("unknown command".to_string())
-                }
-            }
-        },
-        _ => {
-            Resp::Error("unknown command".to_string())
-        }
     }
 }
